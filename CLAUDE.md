@@ -6,8 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Turborepo monorepo (pnpm workspaces) with two apps:
 
-- `apps/frontend` — Next.js (App Router, TypeScript, ESLint flat config, `@heroui/react` for UI components).
-- `apps/backend` — Node.js REST API in TypeScript, built from scratch following `docs/ARCHITECTURE_PRINCIPLES.md` (see below — that document is the authoritative spec for how backend code must be structured).
+- `apps/frontend` — Next.js (App Router, TypeScript, ESLint flat config, `@heroui/react` for UI components). See `apps/frontend/CLAUDE.md` for details.
+- `apps/backend` — Node.js REST API in TypeScript, built from scratch following `docs/ARCHITECTURE_PRINCIPLES.md` (the authoritative spec for how backend code must be structured). See `apps/backend/CLAUDE.md` for details.
 
 Package manager is **pnpm** (`packageManager` pinned in root `package.json`). Never use `npm`/`yarn` in this repo.
 
@@ -31,15 +31,7 @@ pnpm --filter frontend <script>    # e.g. pnpm --filter frontend dev
 pnpm --filter backend <script>     # e.g. pnpm --filter backend build
 ```
 
-Backend-specific (`apps/backend`):
-
-```bash
-pnpm dev      # tsx watch src/main.rest.ts — dev server with hot reload
-pnpm build    # clean dist/ then tsc -p tsconfig.json
-pnpm start    # node dist/main.rest.js — run compiled build
-```
-
-There is no test runner configured yet.
+See `apps/backend/CLAUDE.md` and `apps/frontend/CLAUDE.md` for each app's own scripts (e.g. backend's `tsx watch` dev runner).
 
 ### Adding dependencies
 
@@ -55,30 +47,6 @@ pnpm may prompt to approve build scripts for new deps (`ERR_PNPM_IGNORED_BUILDS`
 
 ## Architecture
 
-### Backend (`apps/backend`)
-
-The backend must follow `docs/ARCHITECTURE_PRINCIPLES.md` — read it before adding or modifying backend code. Key points:
-
-- **ESM + NodeNext**: `"type": "module"`, `tsconfig` uses `module: NodeNext` / `moduleResolution: node16`. All relative imports in source use a `.js` extension even though files are `.ts` (e.g. `import { Component } from '../shared/types/component.type.js'`).
-- **Dev runner is `tsx watch`, not `ts-node`** — this is an intentional deviation from the architecture doc (which specifies `nodemon` + `ts-node`). `ts-node --esm` fails to resolve `.js`-suffixed imports back to `.ts` source under `NodeNext`; `tsx` handles it correctly. Keep using `tsx` for the backend dev script.
-- **Dependency injection is central** (`inversify` + `reflect-metadata`). Every module exports a `create<Module>Container()` factory; `main.rest.ts` merges all module containers via `Container.merge(...)` and resolves `RestApplication` from the merged container. All DI tokens live in one place: `shared/types/component.type.ts` (`Component.X` symbols).
-- **Layering is strict**: `Controller → Service (interface) → Entity/Model (Typegoose) → MongoDB`. Controllers only parse HTTP/dispatch to services/build responses; all business logic and data access live in services; entities describe schema only.
-- **Three distinct data shapes** per business module — DTO (input, `class-validator`), RDO (output, `class-transformer` + `fillDTO`), Entity (storage, Typegoose) — never conflated.
-- **Business modules** (none exist yet) go under `apps/backend/src/shared/modules/<name>/` following the fixed per-module file template described in the architecture doc §4 and the "new module checklist" in §13 (component tokens → entity → service interface → default service → DTOs → RDOs → controller → module container → wire into `main.rest.ts` and `rest.application.ts`).
-- **Config**: only through `convict`-based `RestSchema`/`RestConfig` (`shared/libs/config/`), injected as `Component.Config`. No direct `process.env` access anywhere else. Env vars are documented in `apps/backend/.env.example`.
-- **Logging**: only through the injected `Logger` interface (`shared/libs/logger/`, implemented by `PinoLogger`). No `console.*` in business code.
-- Naming conventions (file suffixes, `Default` prefix for service implementations, singular module directory names) are defined in §12 of the architecture doc — follow them for any new file.
-
-Current backend skeleton (`apps/backend/src/`):
-- `main.rest.ts` — thin entrypoint, builds the DI container and calls `application.init()`.
-- `rest/` — `rest.application.ts` (Express bootstrap: middlewares, routes, `listen`), `rest.container.ts` (root DI container factory), `rest.constant.ts`.
-- `shared/libs/config/`, `shared/libs/logger/` — the only infrastructure implemented so far.
-- `shared/modules/`, `shared/helpers/` — intentionally empty, ready for the first business module.
-
-### Frontend (`apps/frontend`)
-
-Standard Next.js App Router app (`src/app/`), TypeScript, ESLint 9 flat config extending `eslint-config-next`. No architecture doc constrains this app beyond what Next.js itself expects.
-
 ### Turborepo task graph (`turbo.json`)
 
 - `dev` — uncached, persistent (long-running dev servers).
@@ -89,3 +57,13 @@ Standard Next.js App Router app (`src/app/`), TypeScript, ESLint 9 flat config e
 
 - Prettier (`.prettierrc.json`) and ESLint are configured per-app but should stay stylistically consistent (both apps wire in `eslint-config-prettier` to avoid conflicts between ESLint and Prettier).
 - `docs/ARCHITECTURE_PRINCIPLES.md` is a reference document, not a source file — it's excluded from `pnpm format` via `.prettierignore` and should not be reformatted/edited casually.
+
+### Keeping documentation in sync with architecture
+
+Whenever a change alters the project's architecture — new/removed apps or packages, changes to the Turborepo task graph, new cross-app conventions, or a deviation from `docs/ARCHITECTURE_PRINCIPLES.md` — update the relevant documentation in the same change:
+
+- This root `CLAUDE.md` for repo-wide structure and commands.
+- `apps/frontend/CLAUDE.md` / `apps/backend/CLAUDE.md` for app-specific architecture.
+- `docs/ARCHITECTURE_PRINCIPLES.md` when the backend's structural rules themselves change (not routine edits — see note above).
+
+Do not leave documentation describing a structure that no longer matches the code.
