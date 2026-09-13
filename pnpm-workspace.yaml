@@ -2,5 +2,6 @@ packages:
   - "apps/*"
 allowBuilds:
   esbuild: true
+  mongodb-memory-server: true
   sharp: true
   unrs-resolver: true

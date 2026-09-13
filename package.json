@@ -16,5 +16,6 @@
   "devDependencies": {
     "prettier": "^3.3.3",
     "turbo": "^2.1.2"
-  }
+  },
+  "workspaces": ["apps/*"]
 }
