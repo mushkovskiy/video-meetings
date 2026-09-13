@@ -24,6 +24,14 @@ pnpm format                        # prettier --write across the repo
 pnpm format:check                  # prettier --check across the repo
 ```
 
+Testing is per-app (no root-level aggregate script yet, but wired into `turbo.json`'s `test`/`test:e2e` tasks):
+
+```bash
+pnpm --filter backend test         # vitest run — backend unit/e2e tests
+pnpm --filter backend test:e2e     # vitest run tests/e2e — backend e2e only
+pnpm --filter frontend test:e2e    # playwright test — frontend e2e
+```
+
 Per-app (useful for targeting a single app or running a script not wired into `turbo.json`):
 
 ```bash
@@ -52,6 +60,7 @@ pnpm may prompt to approve build scripts for new deps (`ERR_PNPM_IGNORED_BUILDS`
 - `dev` — uncached, persistent (long-running dev servers).
 - `build` — depends on `^build` (upstream workspace builds first); outputs `dist/**` and `.next/**` (excluding `.next/cache/**`) are cached.
 - `lint` — depends on `^lint`.
+- `test` / `test:e2e` — uncached (`cache: false`); run each app's own `test`/`test:e2e` script (backend: Vitest; frontend: Playwright).
 
 ### Shared repo-wide config
 

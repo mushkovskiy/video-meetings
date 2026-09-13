@@ -9,12 +9,25 @@ The backend is a Node.js REST API in TypeScript, built from scratch following `d
 ## Commands
 
 ```bash
-pnpm dev      # tsx watch src/main.rest.ts — dev server with hot reload
-pnpm build    # clean dist/ then tsc -p tsconfig.json
-pnpm start    # node dist/main.rest.js — run compiled build
+pnpm dev        # tsx watch src/main.rest.ts — dev server with hot reload
+pnpm build      # clean dist/ then tsc -p tsconfig.json
+pnpm start      # node dist/main.rest.js — run compiled build
+pnpm test       # vitest run — all tests under tests/
+pnpm test:e2e   # vitest run tests/e2e — e2e tests only
 ```
 
-There is no test runner configured yet.
+## Testing
+
+- Test runner is **Vitest** (`vitest.config.ts`), not Jest — keep using `vitest` imports (`describe`/`it`/`expect` from `'vitest'`), not globals.
+- Tests live under `apps/backend/tests/`, mirroring the runtime source, not next to `src/`:
+  - `tests/e2e/*.e2e.test.ts` — end-to-end tests that exercise the Express app through `supertest`, hitting real routes with a real (in-memory) MongoDB.
+  - `tests/helpers/create-test-app.ts` — builds the DI container and returns the Express instance (`RestApplication.getServer()`) without binding a port, for `supertest`.
+  - `tests/setup/mongo-memory-server.ts` — starts/stops a `mongodb-memory-server` instance per test file and points `DB_MONGO_*` env vars at it. The default instance runs with no auth, so `DB_MONGO_USER`/`DB_MONGO_PASSWORD` are set to `''` — this is intentional, not a stub. Whenever the future `getMongoURI(...)` helper (see architecture doc §8) is written, it must only insert a `user:password@` segment when both are non-empty, otherwise it will build an invalid `mongodb://:@host:port/name` URI for this test setup.
+  - `tests/setup/test-env.ts` — a Vitest `setupFile` that fills in the convict-required env vars (`SALT`, `JWT_SECRET`, `DB_USER`, `DB_PASSWORD`, `UPLOAD_DIRECTORY`) with test defaults so `RestConfig`'s `restSchema.validate({ allowed: 'strict' })` doesn't throw when no `.env` file is present. Note these are the legacy schema keys (`DB_USER`/`DB_PASSWORD`), not yet the `DB_MONGO_*`/`DB_POSTGRES_*` names used in `.env.example` — `rest.schema.ts` hasn't been updated to match yet.
+  - `tests/tsconfig.json` — a separate tsconfig (extends `../tsconfig.json`, `noEmit: true`) so the editor/tsc resolve `@types/node` (`process`, etc.) for files under `tests/`. It's deliberately not merged into the main `tsconfig.json`, whose `rootDir: "./src"` would break `pnpm build` if `tests/` were included there.
+- `RestApplication.getServer()` registers middlewares/routes and returns the `Express` app without calling `.listen()` — this is the seam tests use; `init()` calls it internally before listening.
+- `mongodb-memory-server` downloads a real `mongod` binary (~780MB) into `~/.cache/mongodb-binaries` on first use — this is a one-time, potentially slow step depending on network conditions, not a broken test. `vitest.config.ts` sets `testTimeout`/`hookTimeout` to 30s to accommodate that; increase further if the binary isn't cached yet.
+- The e2e auth tests (`tests/e2e/auth-register.e2e.test.ts`, `tests/e2e/auth-login.e2e.test.ts`) were written TDD-first (RED) against a `user` module (`POST /users/register`, `POST /users/login`) that does not exist yet — they will fail until that module and `DatabaseClient` are implemented per `docs/ARCHITECTURE_PRINCIPLES.md` §13.
 
 ## Architecture
 

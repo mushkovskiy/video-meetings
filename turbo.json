@@ -11,6 +11,12 @@
     },
     "lint": {
       "dependsOn": ["^lint"]
+    },
+    "test": {
+      "cache": false
+    },
+    "test:e2e": {
+      "cache": false
     }
   }
 }

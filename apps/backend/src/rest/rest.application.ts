@@ -9,6 +9,7 @@ import type { Logger } from '../shared/libs/logger/logger.interface.js';
 @injectable()
 export class RestApplication {
   private readonly server: Express;
+  private isBootstrapped = false;
 
   constructor(
     @inject(Component.Logger) private readonly logger: Logger,
@@ -27,14 +28,23 @@ export class RestApplication {
     });
   }
 
+  // Lets supertest exercise the app without binding a real port.
+  public getServer(): Express {
+    if (!this.isBootstrapped) {
+      this.registerMiddlewares();
+      this.registerRoutes();
+      this.isBootstrapped = true;
+    }
+
+    return this.server;
+  }
+
   public async init(): Promise<void> {
     this.logger.info('Initializing REST application...');
 
-    this.registerMiddlewares();
-    this.registerRoutes();
-
+    const server = this.getServer();
     const port = this.config.get('PORT');
-    this.server.listen(port, () => {
+    server.listen(port, () => {
       this.logger.info(`Server started on http://localhost:${port}`);
     });
   }
