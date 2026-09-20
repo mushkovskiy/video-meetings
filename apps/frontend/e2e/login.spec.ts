@@ -11,6 +11,8 @@ const registerUser = async (page: import('@playwright/test').Page, email: string
   await page.getByTestId('register-email-input').fill(email);
   await page.getByTestId('register-password-input').fill(PASSWORD);
   await page.getByTestId('register-submit-button').click();
+  await expect(page).toHaveURL(/\/dashboard$/);
+  await page.getByTestId('dashboard-logout-button').click();
   await expect(page).toHaveURL(/\/login$/);
 };
 

@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 const uniqueEmail = () => `jane.doe.${Date.now()}.${Math.floor(Math.random() * 10000)}@example.com`;
 
 test.describe('Registration', () => {
-  test('registers a new user and redirects to the login page', async ({ page }) => {
+  test('registers a new user and redirects to the dashboard', async ({ page }) => {
     await page.goto('/register');
 
     await page.getByTestId('register-firstName-input').fill('Jane');
@@ -12,7 +12,8 @@ test.describe('Registration', () => {
     await page.getByTestId('register-password-input').fill('super-secret-1');
     await page.getByTestId('register-submit-button').click();
 
-    await expect(page).toHaveURL(/\/login$/);
+    await expect(page).toHaveURL(/\/dashboard$/);
+    await expect(page.getByTestId('dashboard-welcome')).toContainText('Jane');
   });
 
   test('shows a validation error for an invalid email', async ({ page }) => {
@@ -37,7 +38,7 @@ test.describe('Registration', () => {
     await page.getByTestId('register-email-input').fill(email);
     await page.getByTestId('register-password-input').fill('super-secret-1');
     await page.getByTestId('register-submit-button').click();
-    await expect(page).toHaveURL(/\/login$/);
+    await expect(page).toHaveURL(/\/dashboard$/);
 
     await page.goto('/register');
     await page.getByTestId('register-firstName-input').fill('Jane');

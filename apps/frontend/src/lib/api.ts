@@ -84,3 +84,17 @@ export function loginUser(payload: LoginPayload): Promise<LoggedInUser> {
     body: JSON.stringify(payload),
   });
 }
+
+export type Meeting = {
+  id: string;
+  title: string;
+  description?: string;
+  scheduledAt: string;
+};
+
+export function getMeetings(token: string): Promise<Meeting[]> {
+  return request<Meeting[]>('/meetings', {
+    method: 'GET',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}

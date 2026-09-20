@@ -16,8 +16,8 @@ import { useRouter } from 'next/navigation';
 import { useRef, useState, type FormEvent, type RefObject } from 'react';
 
 import { PasswordInput } from '@/components/password-input';
-import { ApiError, registerUser } from '@/lib/api';
-import { saveProfile } from '@/lib/auth-storage';
+import { ApiError, loginUser, registerUser } from '@/lib/api';
+import { saveProfile, saveSession } from '@/lib/auth-storage';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MIN_PASSWORD_LENGTH = 6;
@@ -102,7 +102,13 @@ export default function RegisterPage() {
     try {
       await registerUser(values);
       saveProfile(values.email, { firstName: values.firstName, lastName: values.lastName });
-      router.push('/login');
+
+      const { token, email } = await loginUser({
+        email: values.email,
+        password: values.password,
+      });
+      saveSession({ token, email });
+      router.push('/dashboard');
     } catch (err) {
       setFormError(
         err instanceof ApiError ? err.message : 'Something went wrong. Please try again.',
