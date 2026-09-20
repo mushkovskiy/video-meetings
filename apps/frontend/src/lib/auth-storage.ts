@@ -41,3 +41,7 @@ export function clearSession(): void {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(EMAIL_KEY);
 }
+
+export function getDisplayName(session: Session): string {
+  return getProfile(session.email)?.firstName ?? session.email;
+}

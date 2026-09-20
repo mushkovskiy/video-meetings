@@ -1,85 +1,24 @@
 'use client';
 
-import { Alert, Button, Card, FieldError, Form, Input, Label, TextField } from '@heroui/react';
+import { Button, Card, Form } from '@heroui/react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useRef, useState, type FormEvent, type RefObject } from 'react';
 
-import { PasswordInput } from '@/components/password-input';
-import { ApiError, loginUser } from '@/lib/api';
-import { saveSession } from '@/lib/auth-storage';
-
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-type FieldName = 'email' | 'password';
-type FieldErrors = Partial<Record<FieldName, string>>;
-
-function validateField(name: FieldName, value: string): string | undefined {
-  if (name === 'email') {
-    if (!value.trim()) return 'Enter your email address.';
-    return EMAIL_PATTERN.test(value)
-      ? undefined
-      : 'Enter a valid email address, for example jane@example.com.';
-  }
-
-  return value ? undefined : 'Enter your password.';
-}
+import { EmailField } from '@/components/auth/email-field';
+import { FormErrorAlert } from '@/components/auth/form-error-alert';
+import { PasswordField } from '@/components/auth/password-field';
+import { useLoginForm } from '@/hooks/use-login-form';
 
 export default function LoginPage() {
-  const router = useRouter();
-  const [values, setValues] = useState<Record<FieldName, string>>({ email: '', password: '' });
-  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
-  const [formError, setFormError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const emailRef = useRef<HTMLInputElement>(null);
-  const passwordRef = useRef<HTMLInputElement>(null);
-
-  const setField = (name: FieldName) => (value: string) => {
-    setValues((current) => ({ ...current, [name]: value }));
-    setFieldErrors((current) =>
-      current[name] && !validateField(name, value) ? { ...current, [name]: undefined } : current,
-    );
-  };
-
-  const validateOnBlur = (name: FieldName) => () => {
-    setFieldErrors((current) => ({ ...current, [name]: validateField(name, values[name]) }));
-  };
-
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setFormError(null);
-
-    const order: FieldName[] = ['email', 'password'];
-    const nextErrors: FieldErrors = {};
-    for (const name of order) {
-      nextErrors[name] = validateField(name, values[name]);
-    }
-    setFieldErrors(nextErrors);
-
-    const firstInvalid = order.find((name) => nextErrors[name]);
-    if (firstInvalid) {
-      const refs: Record<FieldName, RefObject<HTMLInputElement | null>> = {
-        email: emailRef,
-        password: passwordRef,
-      };
-      setFormError('Check the highlighted fields and try again.');
-      refs[firstInvalid].current?.focus();
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      const { token, email } = await loginUser(values);
-      saveSession({ token, email });
-      router.push('/dashboard');
-    } catch (err) {
-      setFormError(
-        err instanceof ApiError ? err.message : 'Something went wrong. Please try again.',
-      );
-      setIsSubmitting(false);
-    }
-  };
+  const {
+    values,
+    fieldErrors,
+    formError,
+    isSubmitting,
+    refs,
+    setField,
+    validateOnBlur,
+    handleSubmit,
+  } = useLoginForm();
 
   return (
     <main className="flex min-h-screen items-center justify-center px-4 py-10">
@@ -98,53 +37,27 @@ export default function LoginPage() {
             validationBehavior="aria"
             onSubmit={handleSubmit}
           >
-            {formError ? (
-              <Alert data-testid="login-error" role="alert" status="danger">
-                <Alert.Indicator />
-                <Alert.Content>
-                  <Alert.Title>{formError}</Alert.Title>
-                </Alert.Content>
-              </Alert>
-            ) : null}
+            <FormErrorAlert message={formError} testId="login-error" />
 
-            <TextField
-              fullWidth
-              isInvalid={Boolean(fieldErrors.email)}
-              isRequired
-              name="email"
-              type="email"
+            <EmailField
+              error={fieldErrors.email}
+              inputRef={refs.email}
+              testId="login-email-input"
               value={values.email}
               onBlur={validateOnBlur('email')}
               onChange={setField('email')}
-            >
-              <Label>Email</Label>
-              <Input
-                autoComplete="email"
-                data-testid="login-email-input"
-                placeholder="jane@example.com"
-                ref={emailRef}
-              />
-              <FieldError>{fieldErrors.email}</FieldError>
-            </TextField>
+            />
 
-            <TextField
-              fullWidth
-              isInvalid={Boolean(fieldErrors.password)}
-              isRequired
-              name="password"
+            <PasswordField
+              autoComplete="current-password"
+              error={fieldErrors.password}
+              inputRef={refs.password}
+              placeholder="Your password"
+              testId="login-password-input"
               value={values.password}
               onBlur={validateOnBlur('password')}
               onChange={setField('password')}
-            >
-              <Label>Password</Label>
-              <PasswordInput
-                autoComplete="current-password"
-                placeholder="Your password"
-                ref={passwordRef}
-                testId="login-password-input"
-              />
-              <FieldError>{fieldErrors.password}</FieldError>
-            </TextField>
+            />
 
             <Button
               data-testid="login-submit-button"
