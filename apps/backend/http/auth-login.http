@@ -1,0 +1,47 @@
+@baseUrl = http://localhost:4000
+
+### 0. Register the user used by the requests below (run once)
+POST {{baseUrl}}/users/register
+Content-Type: application/json
+
+{
+  "email": "john.smith@example.com",
+  "firstName": "John",
+  "lastName": "Smith",
+  "password": "super-secret-1"
+}
+
+### 1. Log in with correct credentials (-> 200 OK + JWT token)
+POST {{baseUrl}}/users/login
+Content-Type: application/json
+
+{
+  "email": "john.smith@example.com",
+  "password": "super-secret-1"
+}
+
+### 2. Log in with an incorrect password (-> 401 Unauthorized)
+POST {{baseUrl}}/users/login
+Content-Type: application/json
+
+{
+  "email": "john.smith@example.com",
+  "password": "wrong-password"
+}
+
+### 3. Log in with an email that was never registered (-> 404 Not Found)
+POST {{baseUrl}}/users/login
+Content-Type: application/json
+
+{
+  "email": "unknown.user@example.com",
+  "password": "super-secret-1"
+}
+
+### 4. Log in with an invalid request body (-> 400 Bad Request)
+POST {{baseUrl}}/users/login
+Content-Type: application/json
+
+{
+  "email": "not-an-email"
+}

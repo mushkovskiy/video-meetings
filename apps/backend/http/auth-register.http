@@ -1,0 +1,54 @@
+@baseUrl = http://localhost:4000
+
+### Register a new user (success -> 201 Created)
+POST {{baseUrl}}/users/register
+Content-Type: application/json
+
+{
+  "email": "jane.doe@example.com",
+  "firstName": "Jane",
+  "lastName": "Doe",
+  "password": "super-secret-1"
+}
+
+### Register with an invalid email (-> 400 Bad Request)
+POST {{baseUrl}}/users/register
+Content-Type: application/json
+
+{
+  "email": "not-an-email",
+  "firstName": "Jane",
+  "lastName": "Doe",
+  "password": "super-secret-1"
+}
+
+### Register with a password that is too short (-> 400 Bad Request)
+POST {{baseUrl}}/users/register
+Content-Type: application/json
+
+{
+  "email": "jane.doe@example.com",
+  "firstName": "Jane",
+  "lastName": "Doe",
+  "password": "123"
+}
+
+### Register with missing required fields (-> 400 Bad Request)
+POST {{baseUrl}}/users/register
+Content-Type: application/json
+
+{
+  "email": "jane.doe@example.com"
+}
+
+### Register with an email that is already taken (-> 409 Conflict)
+# Run the first request above at least once before this one.
+POST {{baseUrl}}/users/register
+Content-Type: application/json
+
+{
+  "email": "jane.doe@example.com",
+  "firstName": "Jane",
+  "lastName": "Doe",
+  "password": "super-secret-1"
+}

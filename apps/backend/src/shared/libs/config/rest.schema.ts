@@ -7,11 +7,11 @@ export type RestSchema = {
   PORT: number;
   SALT: string;
   JWT_SECRET: string;
-  DB_HOST: string;
-  DB_PORT: string;
-  DB_NAME: string;
-  DB_USER: string;
-  DB_PASSWORD: string;
+  DB_MONGO_HOST: string;
+  DB_MONGO_PORT: string;
+  DB_MONGO_NAME: string;
+  DB_MONGO_USER: string;
+  DB_MONGO_PASSWORD: string;
   UPLOAD_DIRECTORY: string;
 };
 
@@ -34,35 +34,35 @@ export const restSchema = convict<RestSchema>({
     env: 'JWT_SECRET',
     default: null,
   },
-  DB_HOST: {
-    doc: 'IP address of the database server',
+  DB_MONGO_HOST: {
+    doc: 'IP address of the MongoDB server',
     format: 'ipaddress',
-    env: 'DB_HOST',
+    env: 'DB_MONGO_HOST',
     default: '127.0.0.1',
   },
-  DB_PORT: {
-    doc: 'Port of the database server',
+  DB_MONGO_PORT: {
+    doc: 'Port of the MongoDB server',
     format: 'port',
-    env: 'DB_PORT',
+    env: 'DB_MONGO_PORT',
     default: '27017',
   },
-  DB_NAME: {
-    doc: 'Database name',
+  DB_MONGO_NAME: {
+    doc: 'MongoDB database name',
     format: String,
-    env: 'DB_NAME',
+    env: 'DB_MONGO_NAME',
     default: 'video-meetings',
   },
-  DB_USER: {
-    doc: 'Database user',
+  DB_MONGO_USER: {
+    doc: 'MongoDB user',
     format: String,
-    env: 'DB_USER',
-    default: null,
+    env: 'DB_MONGO_USER',
+    default: '',
   },
-  DB_PASSWORD: {
-    doc: 'Database password',
+  DB_MONGO_PASSWORD: {
+    doc: 'MongoDB password',
     format: String,
-    env: 'DB_PASSWORD',
-    default: null,
+    env: 'DB_MONGO_PASSWORD',
+    default: '',
   },
   UPLOAD_DIRECTORY: {
     doc: 'Directory for uploaded files',
