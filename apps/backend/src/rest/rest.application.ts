@@ -6,7 +6,9 @@ import type { Config } from '../shared/libs/config/config.interface.js';
 import type { RestSchema } from '../shared/libs/config/rest.schema.js';
 import type { DatabaseClient } from '../shared/libs/database/database-client.interface.js';
 import type { Logger } from '../shared/libs/logger/logger.interface.js';
+import { ParseTokenMiddleware } from '../shared/libs/middleware/parse-token.middleware.js';
 import type { ExceptionFilter } from '../shared/libs/rest/exception-filter.interface.js';
+import type { MeetingController } from '../shared/modules/meeting/meeting.controller.js';
 import type { UserController } from '../shared/modules/user/user.controller.js';
 import { Component } from '../shared/types/component.type.js';
 
@@ -22,12 +24,16 @@ export class RestApplication {
     @inject(Component.DatabaseClient) private readonly databaseClient: DatabaseClient,
     @inject(Component.AppExceptionFilter) private readonly appExceptionFilter: ExceptionFilter,
     @inject(Component.UserController) private readonly userController: UserController,
+    @inject(Component.MeetingController) private readonly meetingController: MeetingController,
   ) {
     this.server = express();
   }
 
   private registerMiddlewares(): void {
+    const parseTokenMiddleware = new ParseTokenMiddleware(this.config.get('JWT_SECRET'));
+
     this.server.use(express.json());
+    this.server.use(parseTokenMiddleware.execute.bind(parseTokenMiddleware));
   }
 
   private registerRoutes(): void {
@@ -36,6 +42,7 @@ export class RestApplication {
     });
 
     this.server.use('/users', this.userController.router);
+    this.server.use('/meetings', this.meetingController.router);
   }
 
   private registerExceptionFilters(): void {
