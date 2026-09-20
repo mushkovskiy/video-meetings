@@ -11,6 +11,10 @@ Turborepo monorepo (pnpm workspaces) with two apps:
 
 Package manager is **pnpm** (`packageManager` pinned in root `package.json`). Never use `npm`/`yarn` in this repo.
 
+## Git workflow
+
+Never run `git commit` (or `git push`) until the user has reviewed the changes and explicitly asked for the commit. Prepare/stage changes and describe what would be committed, then wait for the user's go-ahead — do not commit proactively as part of finishing a task, even if the user asked for the underlying work to be done.
+
 ## Commands
 
 Run from repo root unless noted. All app scripts are orchestrated through Turborepo.
