@@ -14,16 +14,19 @@ export interface UserConstructorData {
   },
 })
 export class UserEntity extends defaultClasses.TimeStamps {
-  @prop({ required: true, unique: true })
+  // `type` is explicit because esbuild (used by tsx's dev runner) doesn't
+  // emit the `design:type` decorator metadata Typegoose would otherwise
+  // infer this from — see the "Dev runner" note in apps/backend/CLAUDE.md.
+  @prop({ required: true, unique: true, type: () => String })
   public email!: string;
 
-  @prop({ required: true })
+  @prop({ required: true, type: () => String })
   public firstName!: string;
 
-  @prop({ required: true })
+  @prop({ required: true, type: () => String })
   public lastName!: string;
 
-  @prop({ required: true })
+  @prop({ required: true, type: () => String })
   public passwordHash!: string;
 
   constructor(data?: UserConstructorData) {

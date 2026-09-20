@@ -14,16 +14,19 @@ export interface MeetingConstructorData {
   },
 })
 export class MeetingEntity extends defaultClasses.TimeStamps {
-  @prop({ required: true })
+  // `type` is explicit because esbuild (used by tsx's dev runner) doesn't
+  // emit the `design:type` decorator metadata Typegoose would otherwise
+  // infer this from — see the "Dev runner" note in apps/backend/CLAUDE.md.
+  @prop({ required: true, type: () => String })
   public title!: string;
 
-  @prop()
+  @prop({ type: () => String })
   public description?: string;
 
-  @prop({ required: true })
+  @prop({ required: true, type: () => Date })
   public scheduledAt!: Date;
 
-  @prop({ required: true })
+  @prop({ required: true, type: () => String })
   public ownerId!: string;
 
   constructor(data?: MeetingConstructorData) {
