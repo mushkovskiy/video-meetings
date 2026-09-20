@@ -57,6 +57,20 @@ pnpm add -D <pkg> -w              # only for tooling shared by the whole monorep
 
 pnpm may prompt to approve build scripts for new deps (`ERR_PNPM_IGNORED_BUILDS`) — this is recorded in `pnpm-workspace.yaml` under `allowBuilds`.
 
+## Frontend dev server
+
+The frontend dev server is always already running — never start it yourself (no `pnpm dev`, `pnpm --filter frontend dev`, etc.) when working on `apps/frontend`. Just use it as-is (e.g. for Playwright MCP checks).
+
+## UI changes — mandatory verification
+
+After changing any existing interface (component, page, form, layout) or creating a new one in `apps/frontend`, the task is **not considered done** until all of the following happen, in the same change:
+
+1. Run the Playwright MCP tools (`mcp__playwright__*`) against the running dev server to actually exercise the changed/new UI (navigate, interact, screenshot/snapshot as relevant).
+2. Invoke the `ui-ux-pro-max` skill to review the interface.
+3. Fix every remark/issue raised by the Playwright check and by the skill.
+
+Only after Playwright MCP has been run, the skill has been run, and all resulting remarks have been fixed should the UI work be reported as complete.
+
 ## Architecture
 
 ### Turborepo task graph (`turbo.json`)
