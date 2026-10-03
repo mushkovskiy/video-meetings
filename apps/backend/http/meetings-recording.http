@@ -1,0 +1,100 @@
+@baseUrl = http://localhost:4000
+
+### 0. Register the user used by the requests below (run once)
+POST {{baseUrl}}/users/register
+Content-Type: application/json
+
+{
+  "email": "john.smith@example.com",
+  "firstName": "John",
+  "lastName": "Smith",
+  "password": "super-secret-1"
+}
+
+### 1. Log in and capture the JWT token
+# @name login
+POST {{baseUrl}}/users/login
+Content-Type: application/json
+
+{
+  "email": "john.smith@example.com",
+  "password": "super-secret-1"
+}
+
+###
+@token = {{login.response.body.token}}
+
+### 2. Create a meeting and capture its id
+# @name createMeeting
+POST {{baseUrl}}/meetings
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Sprint planning",
+  "scheduledAt": "2026-10-01T10:00:00.000Z"
+}
+
+###
+@meetingId = {{createMeeting.response.body.id}}
+
+### 3. Upload a recording (-> 201 Created, status "processing")
+# Put a real mp3 / wav / m4a / mp4 / webm next to this file and adjust the path below.
+# Allowed: mp3, wav, m4a, mp4, webm; max 100 MiB (UPLOAD_MAX_RECORDING_SIZE).
+POST {{baseUrl}}/meetings/{{meetingId}}/recording
+Authorization: Bearer {{token}}
+Content-Type: multipart/form-data; boundary=----RecordingBoundary
+
+------RecordingBoundary
+Content-Disposition: form-data; name="file"; filename="meeting.mp3"
+Content-Type: audio/mpeg
+
+< ./meeting.mp3
+------RecordingBoundary--
+
+### 4. Read the recording metadata and status (-> 200 OK)
+GET {{baseUrl}}/meetings/{{meetingId}}/recording
+Authorization: Bearer {{token}}
+
+### 5. Upload a second recording to the same meeting (-> 409 Conflict until replacement is implemented)
+POST {{baseUrl}}/meetings/{{meetingId}}/recording
+Authorization: Bearer {{token}}
+Content-Type: multipart/form-data; boundary=----RecordingBoundary
+
+------RecordingBoundary
+Content-Disposition: form-data; name="file"; filename="meeting.mp3"
+Content-Type: audio/mpeg
+
+< ./meeting.mp3
+------RecordingBoundary--
+
+### 6. Upload an unsupported format (-> 400 Bad Request)
+POST {{baseUrl}}/meetings/{{meetingId}}/recording
+Authorization: Bearer {{token}}
+Content-Type: multipart/form-data; boundary=----RecordingBoundary
+
+------RecordingBoundary
+Content-Disposition: form-data; name="file"; filename="document.pdf"
+Content-Type: application/pdf
+
+%PDF-1.4 not a recording
+------RecordingBoundary--
+
+### 7. Upload without a token (-> 401 Unauthorized)
+POST {{baseUrl}}/meetings/{{meetingId}}/recording
+Content-Type: multipart/form-data; boundary=----RecordingBoundary
+
+------RecordingBoundary
+Content-Disposition: form-data; name="file"; filename="meeting.mp3"
+Content-Type: audio/mpeg
+
+< ./meeting.mp3
+------RecordingBoundary--
+
+### 8. Read the recording of a non-existent meeting (-> 404 Not Found)
+GET {{baseUrl}}/meetings/000000000000000000000000/recording
+Authorization: Bearer {{token}}
+
+### 9. Read the recording with an invalid meeting id (-> 400 Bad Request)
+GET {{baseUrl}}/meetings/not-a-valid-id/recording
+Authorization: Bearer {{token}}

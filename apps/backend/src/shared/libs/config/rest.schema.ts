@@ -13,6 +13,7 @@ export type RestSchema = {
   DB_MONGO_USER: string;
   DB_MONGO_PASSWORD: string;
   UPLOAD_DIRECTORY: string;
+  UPLOAD_MAX_RECORDING_SIZE: number;
 };
 
 export const restSchema = convict<RestSchema>({
@@ -69,5 +70,11 @@ export const restSchema = convict<RestSchema>({
     format: String,
     env: 'UPLOAD_DIRECTORY',
     default: null,
+  },
+  UPLOAD_MAX_RECORDING_SIZE: {
+    doc: 'Maximum size of an uploaded meeting recording, in bytes',
+    format: 'nat',
+    env: 'UPLOAD_MAX_RECORDING_SIZE',
+    default: 104857600,
   },
 });

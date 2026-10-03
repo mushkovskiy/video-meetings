@@ -28,7 +28,7 @@
     "jose": "^5.2.4",
     "mime-types": "^2.1.35",
     "mongoose": "^7.6.10",
-    "multer": "^1.4.5-lts.1",
+    "multer": "^2.4.0",
     "pino": "^8.19.0",
     "reflect-metadata": "^0.2.1"
   },
@@ -37,7 +37,7 @@
     "@types/convict": "^6.1.6",
     "@types/express": "^4.17.21",
     "@types/mime-types": "^2.1.4",
-    "@types/multer": "^1.4.11",
+    "@types/multer": "^2.3.0",
     "@types/node": "^20.11.30",
     "@types/supertest": "^7.2.1",
     "eslint": "^9.9.0",

@@ -10,6 +10,7 @@ import { PinoLogger } from '../shared/libs/logger/pino.logger.js';
 import { AppExceptionFilter } from '../shared/libs/rest/app-exception-filter.js';
 import type { ExceptionFilter } from '../shared/libs/rest/exception-filter.interface.js';
 import { createMeetingContainer } from '../shared/modules/meeting/meeting.container.js';
+import { createRecordingContainer } from '../shared/modules/recording/recording.container.js';
 import { createUserContainer } from '../shared/modules/user/user.container.js';
 import { Component } from '../shared/types/component.type.js';
 import { RestApplication } from './rest.application.js';
@@ -37,4 +38,5 @@ export const createRestApplicationContainer = (): Container =>
     createBaseContainer(),
     createUserContainer(),
     createMeetingContainer(),
+    createRecordingContainer(),
   ) as Container;

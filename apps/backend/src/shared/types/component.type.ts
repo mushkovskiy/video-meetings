@@ -10,4 +10,7 @@ export const Component = {
   MeetingService: Symbol.for('MeetingService'),
   MeetingModel: Symbol.for('MeetingModel'),
   MeetingController: Symbol.for('MeetingController'),
+  RecordingService: Symbol.for('RecordingService'),
+  RecordingModel: Symbol.for('RecordingModel'),
+  RecordingController: Symbol.for('RecordingController'),
 } as const;

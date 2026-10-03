@@ -9,6 +9,7 @@ import type { Logger } from '../shared/libs/logger/logger.interface.js';
 import { ParseTokenMiddleware } from '../shared/libs/middleware/parse-token.middleware.js';
 import type { ExceptionFilter } from '../shared/libs/rest/exception-filter.interface.js';
 import type { MeetingController } from '../shared/modules/meeting/meeting.controller.js';
+import type { RecordingController } from '../shared/modules/recording/recording.controller.js';
 import type { UserController } from '../shared/modules/user/user.controller.js';
 import { Component } from '../shared/types/component.type.js';
 
@@ -25,6 +26,8 @@ export class RestApplication {
     @inject(Component.AppExceptionFilter) private readonly appExceptionFilter: ExceptionFilter,
     @inject(Component.UserController) private readonly userController: UserController,
     @inject(Component.MeetingController) private readonly meetingController: MeetingController,
+    @inject(Component.RecordingController)
+    private readonly recordingController: RecordingController,
   ) {
     this.server = express();
   }
@@ -43,6 +46,7 @@ export class RestApplication {
 
     this.server.use('/users', this.userController.router);
     this.server.use('/meetings', this.meetingController.router);
+    this.server.use('/meetings', this.recordingController.router);
   }
 
   private registerExceptionFilters(): void {
