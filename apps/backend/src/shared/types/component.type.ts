@@ -13,4 +13,7 @@ export const Component = {
   RecordingService: Symbol.for('RecordingService'),
   RecordingModel: Symbol.for('RecordingModel'),
   RecordingController: Symbol.for('RecordingController'),
+  TranscriptionQueue: Symbol.for('TranscriptionQueue'),
+  AudioDecoder: Symbol.for('AudioDecoder'),
+  TranscriptionService: Symbol.for('TranscriptionService'),
 } as const;

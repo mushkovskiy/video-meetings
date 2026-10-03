@@ -14,6 +14,10 @@ export type RestSchema = {
   DB_MONGO_PASSWORD: string;
   UPLOAD_DIRECTORY: string;
   UPLOAD_MAX_RECORDING_SIZE: number;
+  TRANSCRIPTION_MODEL: string;
+  TRANSCRIPTION_LANGUAGE: string;
+  TRANSCRIPTION_CACHE_DIR: string;
+  FFMPEG_PATH: string;
 };
 
 export const restSchema = convict<RestSchema>({
@@ -76,5 +80,29 @@ export const restSchema = convict<RestSchema>({
     format: 'nat',
     env: 'UPLOAD_MAX_RECORDING_SIZE',
     default: 104857600,
+  },
+  TRANSCRIPTION_MODEL: {
+    doc: 'Hugging Face id of the Whisper model used for transcription',
+    format: String,
+    env: 'TRANSCRIPTION_MODEL',
+    default: 'Xenova/whisper-small',
+  },
+  TRANSCRIPTION_LANGUAGE: {
+    doc: 'Spoken language of the recordings (Whisper language name)',
+    format: String,
+    env: 'TRANSCRIPTION_LANGUAGE',
+    default: 'russian',
+  },
+  TRANSCRIPTION_CACHE_DIR: {
+    doc: 'Directory where downloaded models are cached',
+    format: String,
+    env: 'TRANSCRIPTION_CACHE_DIR',
+    default: './.cache/models',
+  },
+  FFMPEG_PATH: {
+    doc: 'Path to an ffmpeg binary; empty means the bundled ffmpeg-static one',
+    format: String,
+    env: 'FFMPEG_PATH',
+    default: '',
   },
 });
