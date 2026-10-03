@@ -49,3 +49,5 @@ next-env.d.ts
 # vercel
 .vercel
 .playwright-mcp/
+# uploaded files
+/apps/backend/uploads/
