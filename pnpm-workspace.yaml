@@ -2,6 +2,9 @@ packages:
   - "apps/*"
 allowBuilds:
   esbuild: true
+  ffmpeg-static: true
   mongodb-memory-server: true
+  onnxruntime-node: true
+  protobufjs: false
   sharp: true
   unrs-resolver: true

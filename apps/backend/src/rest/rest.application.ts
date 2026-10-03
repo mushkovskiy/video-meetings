@@ -9,6 +9,8 @@ import type { Logger } from '../shared/libs/logger/logger.interface.js';
 import { ParseTokenMiddleware } from '../shared/libs/middleware/parse-token.middleware.js';
 import type { ExceptionFilter } from '../shared/libs/rest/exception-filter.interface.js';
 import type { MeetingController } from '../shared/modules/meeting/meeting.controller.js';
+import type { TranscriptionService } from '../shared/libs/transcription/transcription-service.interface.js';
+import type { TranscriptionQueue } from '../shared/modules/recording/transcription-queue.interface.js';
 import type { RecordingController } from '../shared/modules/recording/recording.controller.js';
 import type { UserController } from '../shared/modules/user/user.controller.js';
 import { Component } from '../shared/types/component.type.js';
@@ -28,6 +30,9 @@ export class RestApplication {
     @inject(Component.MeetingController) private readonly meetingController: MeetingController,
     @inject(Component.RecordingController)
     private readonly recordingController: RecordingController,
+    @inject(Component.TranscriptionQueue) private readonly transcriptionQueue: TranscriptionQueue,
+    @inject(Component.TranscriptionService)
+    private readonly transcriptionService: TranscriptionService,
   ) {
     this.server = express();
   }
@@ -91,6 +96,13 @@ export class RestApplication {
     await this.connectToDatabase();
 
     const server = this.getServer();
+
+    // Tests only call getServer(), so the queue and the model warm-up start here.
+    await this.transcriptionQueue.start();
+    void this.transcriptionService.warmUp().catch((error: unknown) => {
+      this.logger.error('Failed to load the transcription model', error as Error);
+    });
+
     const port = this.config.get('PORT');
     server.listen(port, () => {
       this.logger.info(`Server started on http://localhost:${port}`);

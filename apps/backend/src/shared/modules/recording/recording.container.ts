@@ -2,6 +2,8 @@ import type { ReturnModelType } from '@typegoose/typegoose';
 import { Container } from 'inversify';
 
 import { Component } from '../../types/component.type.js';
+import { DefaultTranscriptionQueue } from './default-transcription-queue.js';
+import type { TranscriptionQueue } from './transcription-queue.interface.js';
 import { DefaultRecordingService } from './default-recording.service.js';
 import type { RecordingService } from './recording-service.interface.js';
 import { RecordingController } from './recording.controller.js';
@@ -21,6 +23,11 @@ export const createRecordingContainer = (): Container => {
   container
     .bind<RecordingController>(Component.RecordingController)
     .to(RecordingController)
+    .inSingletonScope();
+
+  container
+    .bind<TranscriptionQueue>(Component.TranscriptionQueue)
+    .to(DefaultTranscriptionQueue)
     .inSingletonScope();
 
   return container;

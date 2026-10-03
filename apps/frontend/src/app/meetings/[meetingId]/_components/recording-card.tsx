@@ -28,7 +28,26 @@ function RecordingBody({
   }
 
   if (recording) {
-    return <RecordingMetadata recording={recording} />;
+    return (
+      <>
+        <RecordingMetadata recording={recording} />
+        {recording.status === 'failed' && (
+          <div className="flex flex-col gap-4" data-testid="recording-failed">
+            <Alert data-testid="recording-failure" status="danger">
+              <Alert.Indicator />
+              <Alert.Content>
+                <Alert.Title>Не удалось обработать запись</Alert.Title>
+                <Alert.Description>
+                  {recording.failureReason ?? 'Произошла ошибка при расшифровке.'} Загрузите файл
+                  заново.
+                </Alert.Description>
+              </Alert.Content>
+            </Alert>
+            <RecordingFilePicker label="Загрузить заново" onSelect={onSelectFile} />
+          </div>
+        )}
+      </>
+    );
   }
 
   if (loadError) {

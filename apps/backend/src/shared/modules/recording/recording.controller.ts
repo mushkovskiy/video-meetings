@@ -23,6 +23,7 @@ import { RecordingRdo } from './rdo/recording.rdo.js';
 import type { RecordingService } from './recording-service.interface.js';
 import type { RecordingEntity } from './recording.entity.js';
 import { RecordingStatus } from './recording.entity.js';
+import type { TranscriptionQueue } from './transcription-queue.interface.js';
 
 const RECORDINGS_DIRECTORY = 'recordings';
 const ALLOWED_EXTENSIONS = ['.mp3', '.wav', '.m4a', '.mp4', '.webm'];
@@ -44,6 +45,7 @@ export class RecordingController extends BaseController {
     @inject(Component.Config) config: Config<RestSchema>,
     @inject(Component.MeetingService) meetingService: MeetingService,
     @inject(Component.RecordingService) private readonly recordingService: RecordingService,
+    @inject(Component.TranscriptionQueue) private readonly transcriptionQueue: TranscriptionQueue,
   ) {
     super(logger);
 
@@ -101,9 +103,17 @@ export class RecordingController extends BaseController {
     const { meetingId } = req.params;
 
     try {
-      // Replacing an existing recording is a later phase; until then it is a conflict.
-      if (await this.recordingService.findByMeetingId(meetingId)) {
-        throw new HttpError(StatusCodes.CONFLICT, 'This meeting already has a recording.');
+      const existing = await this.recordingService.findByMeetingId(meetingId);
+
+      if (existing) {
+        // Replacing a healthy recording is a later phase and stays a conflict until then;
+        // a failed one can be re-uploaded so the user is not stuck with it.
+        if (existing.status !== RecordingStatus.Failed) {
+          throw new HttpError(StatusCodes.CONFLICT, 'This meeting already has a recording.');
+        }
+
+        await this.recordingService.deleteById(existing.id as string);
+        await rm(path.join(this.uploadDirectory, existing.storedName), { force: true });
       }
 
       const recording = await this.recordingService.create({
@@ -115,6 +125,9 @@ export class RecordingController extends BaseController {
         size: file.size,
         status: RecordingStatus.Processing,
       });
+
+      // Transcription runs in the background; the response does not wait for it.
+      this.transcriptionQueue.enqueue(recording.id as string);
 
       this.created(res, this.toRdo(recording));
     } catch (error) {

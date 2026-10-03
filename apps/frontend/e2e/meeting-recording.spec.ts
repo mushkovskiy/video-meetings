@@ -1,66 +1,27 @@
 import { expect, test, type Page } from '@playwright/test';
 
-const PASSWORD = 'super-secret-1';
-const TOKEN_KEY = 'video-meetings:auth:token';
-const EMAIL_KEY = 'video-meetings:auth:email';
+import { audioFile, registerUser, seedMeeting, signIn } from './support';
 
-const uniqueEmail = () =>
-  `recording.${Date.now()}.${Math.floor(Math.random() * 10000)}@example.com`;
-
-type User = { email: string; token: string };
-
-const registerUser = async (page: Page, firstName: string): Promise<User> => {
-  const email = uniqueEmail();
-
-  await page.request.post('/api/users/register', {
-    data: { email, firstName, lastName: 'Smith', password: PASSWORD },
+// The dev backend really tries to transcribe the dummy bytes and fails within a second;
+// pin the reported status so these tests stay about the upload, not about the processing.
+const keepProcessing = async (page: Page): Promise<void> => {
+  await page.route('**/api/meetings/*/recording', async (route) => {
+    if (route.request().method() !== 'GET') {
+      await route.fallback();
+      return;
+    }
+    const response = await route.fetch();
+    if (response.status() !== 200) {
+      await route.fulfill({ response });
+      return;
+    }
+    const body = (await response.json()) as Record<string, unknown>;
+    await route.fulfill({
+      response,
+      json: { ...body, status: 'processing', transcript: undefined, failureReason: undefined },
+    });
   });
-  const login = await page.request.post('/api/users/login', {
-    data: { email, password: PASSWORD },
-  });
-  const { token } = (await login.json()) as { token: string };
-
-  return { email, token };
 };
-
-// Signs the browser in by seeding the session into localStorage before the app loads.
-const signIn = async (page: Page, { email, token }: User): Promise<void> => {
-  await page.addInitScript(
-    ([tokenKey, emailKey, tokenValue, emailValue]) => {
-      localStorage.setItem(tokenKey, tokenValue);
-      localStorage.setItem(emailKey, emailValue);
-    },
-    [TOKEN_KEY, EMAIL_KEY, token, email],
-  );
-};
-
-// Registers a user and creates a meeting through the API (via the Next.js /api
-// proxy). Signs the browser in as that user unless `withSession` is false.
-const seedMeeting = async (page: Page, withSession = true): Promise<{ meetingId: string }> => {
-  const owner = await registerUser(page, 'John');
-
-  const meeting = await page.request.post('/api/meetings', {
-    headers: { Authorization: `Bearer ${owner.token}` },
-    data: {
-      title: 'Планёрка по спринту',
-      description: 'Обсуждаем объём работ',
-      scheduledAt: '2026-10-01T10:00:00.000Z',
-    },
-  });
-  const { id: meetingId } = (await meeting.json()) as { id: string };
-
-  if (withSession) {
-    await signIn(page, owner);
-  }
-
-  return { meetingId };
-};
-
-const audioFile = (name: string, mimeType = 'audio/mpeg') => ({
-  name,
-  mimeType,
-  buffer: Buffer.alloc(2048, 1),
-});
 
 test.describe('Meeting page and recording upload', () => {
   test('opens a meeting from the dashboard', async ({ page }) => {
@@ -99,6 +60,7 @@ test.describe('Meeting page and recording upload', () => {
 
   test('uploads a valid file and keeps its metadata after a reload', async ({ page }) => {
     const { meetingId } = await seedMeeting(page);
+    await keepProcessing(page);
 
     await page.goto(`/meetings/${meetingId}`);
     await page.getByTestId('recording-file-input').setInputFiles(audioFile('Встреча.mp3'));
